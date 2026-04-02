@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}New Pickup{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1>New Pickup Request</h1>
+    <form method="POST">
+        {{ form.hidden_tag() }}
+
+        <div class="grid-2">
+            <div>
+                <label>{{ form.patient_first_name.label }}</label>
+                {{ form.patient_first_name(class="input") }}
+            </div>
+            <div>
+                <label>{{ form.patient_last_name.label }}</label>
+                {{ form.patient_last_name(class="input") }}
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div>
+                <label>{{ form.dob.label }}</label>
+                {{ form.dob(class="input", placeholder="MM/DD/YYYY") }}
+            </div>
+            <div>
+                <label>{{ form.patient_identifier.label }}</label>
+                {{ form.patient_identifier(class="input") }}
+            </div>
+        </div>
+
+        <label>{{ form.pickup_address.label }}</label>
+        {{ form.pickup_address(class="input") }}
+
+        <div class="grid-2">
+            <div>
+                <label>{{ form.facility_name.label }}</label>
+                {{ form.facility_name(class="input") }}
+            </div>
+            <div>
+                <label>{{ form.priority.label }}</label>
+                {{ form.priority(class="input") }}
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div>
+                <label>{{ form.ordering_nurse_name.label }}</label>
+                {{ form.ordering_nurse_name(class="input") }}
+            </div>
+            <div>
+                <label>{{ form.ordering_nurse_phone.label }}</label>
+                {{ form.ordering_nurse_phone(class="input") }}
+            </div>
+        </div>
+
+        <label>{{ form.tests_ordered.label }}</label>
+        {{ form.tests_ordered(class="textarea", rows="4") }}
+
+        <label>{{ form.special_instructions.label }}</label>
+        {{ form.special_instructions(class="textarea", rows="4", placeholder="Room number, gate code, call on arrival, STAT notes, etc.") }}
+
+        {{ form.submit(class="btn btn-primary") }}
+    </form>
+</div>
+{% endblock %}
