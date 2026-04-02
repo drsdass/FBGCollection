@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Driver Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Driver Dashboard</h1>
+</div>
+
+<div class="card">
+    <h2>Open Pickups</h2>
+    {% if open_pickups %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Patient</th>
+                <th>Address</th>
+                <th>Priority</th>
+                <th>Created</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for pickup in open_pickups %}
+            <tr>
+                <td>#{{ pickup.id }}</td>
+                <td>{{ pickup.patient_first_name }} {{ pickup.patient_last_name }}</td>
+                <td>{{ pickup.pickup_address }}</td>
+                <td>{{ pickup.priority }}</td>
+                <td>{{ pickup.created_at.strftime('%Y-%m-%d %I:%M %p') }}</td>
+                <td>
+                    <form method="POST" action="{{ url_for('accept_pickup', pickup_id=pickup.id) }}">
+                        <button type="submit" class="btn btn-primary btn-sm">Accept</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No open pickups.</p>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h2>My Assigned Pickups</h2>
+    {% if my_pickups %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Patient</th>
+                <th>Status</th>
+                <th>Priority</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for pickup in my_pickups %}
+            <tr>
+                <td>#{{ pickup.id }}</td>
+                <td>{{ pickup.patient_first_name }} {{ pickup.patient_last_name }}</td>
+                <td><span class="badge">{{ pickup.status }}</span></td>
+                <td>{{ pickup.priority }}</td>
+                <td><a href="{{ url_for('pickup_detail', pickup_id=pickup.id) }}" class="btn btn-sm">View</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No assigned pickups.</p>
+    {% endif %}
+</div>
+{% endblock %}
