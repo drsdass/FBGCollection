@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Create User{% endblock %}
+
+{% block content %}
+<div class="card narrow-card">
+    <h1>Create User</h1>
+    <form method="POST">
+        {{ form.hidden_tag() }}
+
+        <label>{{ form.full_name.label }}</label>
+        {{ form.full_name(class="input") }}
+
+        <label>{{ form.email.label }}</label>
+        {{ form.email(class="input") }}
+
+        <label>{{ form.phone.label }}</label>
+        {{ form.phone(class="input") }}
+
+        <label>{{ form.password.label }}</label>
+        {{ form.password(class="input") }}
+
+        <label>{{ form.role.label }}</label>
+        {{ form.role(class="input") }}
+
+        {{ form.submit(class="btn btn-primary full-width") }}
+    </form>
+</div>
+{% endblock %}
