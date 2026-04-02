@@ -14,11 +14,26 @@ from notifications import notify_new_pickup, notify_pickup_accepted
 load_dotenv()
 
 
+def normalize_database_url(database_url: str) -> str:
+    if database_url.startswith("postgres://"):
+        return database_url.replace("postgres://", "postgresql://", 1)
+    return database_url
+
+
 def create_app():
     app = Flask(__name__)
+
+    raw_db_url = os.getenv("DATABASE_URL", "sqlite:///app.db")
+    database_url = normalize_database_url(raw_db_url)
+
     app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev-secret-key")
-    app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL", "sqlite:///app.db")
+    app.config["SQLALCHEMY_DATABASE_URI"] = database_url
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+    if database_url.startswith("sqlite"):
+        app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+            "connect_args": {"check_same_thread": False}
+        }
 
     db.init_app(app)
     login_manager.init_app(app)
@@ -68,12 +83,18 @@ def create_app():
             return redirect(url_for("index"))
 
         form = LoginForm()
+
         if form.validate_on_submit():
-            user = User.query.filter_by(email=form.email.data.lower().strip()).first()
-            if user and user.check_password(form.password.data):
+            email = form.email.data.lower().strip()
+            password = form.password.data
+
+            user = User.query.filter_by(email=email).first()
+
+            if user and user.check_password(password):
                 login_user(user)
                 flash("Logged in successfully.", "success")
                 return redirect(url_for("index"))
+
             flash("Invalid email or password.", "danger")
 
         return render_template("login.html", form=form)
@@ -95,6 +116,7 @@ def create_app():
             pickups = PickupOrder.query.filter_by(
                 submitted_by_user_id=current_user.id
             ).order_by(PickupOrder.created_at.desc()).all()
+
         return render_template("nurse_dashboard.html", pickups=pickups)
 
     @app.route("/pickup/new", methods=["GET", "POST"])
@@ -123,6 +145,7 @@ def create_app():
                 status="Requested",
                 submitted_by_user_id=current_user.id,
             )
+
             db.session.add(order)
             db.session.commit()
 
@@ -175,6 +198,7 @@ def create_app():
         ).order_by(PickupStatusHistory.changed_at.desc()).all()
 
         status_form = StatusUpdateForm()
+
         return render_template(
             "pickup_detail.html",
             pickup=pickup,
@@ -246,6 +270,7 @@ def create_app():
     def admin_dashboard():
         pickups = PickupOrder.query.order_by(PickupOrder.created_at.desc()).all()
         users = User.query.order_by(User.full_name.asc()).all()
+
         return render_template("admin_dashboard.html", pickups=pickups, users=users)
 
     @app.route("/admin/users/new", methods=["GET", "POST"])
@@ -278,40 +303,53 @@ def create_app():
 
     @app.route("/seed-admin")
     def seed_admin():
-        if User.query.filter_by(email="admin@example.com").first():
-            return "Seed users already exist."
+        demo_users = [
+            {
+                "full_name": "Admin User",
+                "email": "admin@example.com",
+                "phone": "555-100-0001",
+                "role": "admin",
+                "password": "admin123",
+            },
+            {
+                "full_name": "Test Nurse",
+                "email": "nurse@example.com",
+                "phone": "555-100-0002",
+                "role": "nurse",
+                "password": "nurse123",
+            },
+            {
+                "full_name": "Test Driver",
+                "email": "driver@example.com",
+                "phone": "555-100-0003",
+                "role": "driver",
+                "password": "driver123",
+            },
+        ]
 
-        admin = User(
-            full_name="Admin User",
-            email="admin@example.com",
-            phone="555-100-0001",
-            role="admin",
-        )
-        admin.set_password("admin123")
+        for data in demo_users:
+            user = User.query.filter_by(email=data["email"]).first()
 
-        nurse = User(
-            full_name="Test Nurse",
-            email="nurse@example.com",
-            phone="555-100-0002",
-            role="nurse",
-        )
-        nurse.set_password("nurse123")
+            if not user:
+                user = User(
+                    full_name=data["full_name"],
+                    email=data["email"],
+                    phone=data["phone"],
+                    role=data["role"],
+                )
+                db.session.add(user)
 
-        driver = User(
-            full_name="Test Driver",
-            email="driver@example.com",
-            phone="555-100-0003",
-            role="driver",
-        )
-        driver.set_password("driver123")
+            user.full_name = data["full_name"]
+            user.phone = data["phone"]
+            user.role = data["role"]
+            user.set_password(data["password"])
 
-        db.session.add_all([admin, nurse, driver])
         db.session.commit()
-        return "Seeded admin, nurse, and driver users."
+        return "Demo users created/reset successfully."
 
     @app.errorhandler(403)
     def forbidden(_error):
-        return render_template("base.html", content="Forbidden"), 403
+        return "<h1>403 Forbidden</h1><p>You do not have access to this page.</p>", 403
 
     with app.app_context():
         db.create_all()
@@ -322,4 +360,5 @@ def create_app():
 app = create_app()
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.getenv("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=True)
