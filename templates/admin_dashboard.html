@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Admin Dashboard</h1>
+    <a href="{{ url_for('create_user') }}" class="btn btn-primary">Create User</a>
+</div>
+
+<div class="card">
+    <h2>All Pickups</h2>
+    {% if pickups %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Patient</th>
+                <th>Status</th>
+                <th>Priority</th>
+                <th>Nurse</th>
+                <th>Driver</th>
+                <th>Created</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for pickup in pickups %}
+            <tr>
+                <td>#{{ pickup.id }}</td>
+                <td>{{ pickup.patient_first_name }} {{ pickup.patient_last_name }}</td>
+                <td><span class="badge">{{ pickup.status }}</span></td>
+                <td>{{ pickup.priority }}</td>
+                <td>{{ pickup.ordering_nurse_name }}</td>
+                <td>{{ pickup.accepted_by_driver.full_name if pickup.accepted_by_driver else "Unassigned" }}</td>
+                <td>{{ pickup.created_at.strftime('%Y-%m-%d %I:%M %p') }}</td>
+                <td><a href="{{ url_for('pickup_detail', pickup_id=pickup.id) }}" class="btn btn-sm">View</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No pickups found.</p>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h2>Users</h2>
+    {% if users %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Role</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>{{ user.full_name }}</td>
+                <td>{{ user.email }}</td>
+                <td>{{ user.phone }}</td>
+                <td>{{ user.role }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No users found.</p>
+    {% endif %}
+</div>
+{% endblock %}
