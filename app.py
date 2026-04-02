@@ -40,7 +40,7 @@ def create_app():
 
     @login_manager.user_loader
     def load_user(user_id):
-        return User.query.get(int(user_id))
+        return db.session.get(User, int(user_id))
 
     def role_required(*roles):
         def decorator(fn):
@@ -88,15 +88,7 @@ def create_app():
             email = form.email.data.lower().strip()
             password = form.password.data
 
-            print(f"LOGIN ATTEMPT: {email}")
-
             user = User.query.filter_by(email=email).first()
-
-            if not user:
-                print("NO USER FOUND")
-            else:
-                print(f"USER FOUND: {user.email} / role={user.role}")
-                print(f"PASSWORD CHECK: {user.check_password(password)}")
 
             if user and user.check_password(password):
                 login_user(user)
@@ -247,10 +239,9 @@ def create_app():
             flash("Invalid status submission.", "danger")
             return redirect(url_for("pickup_detail", pickup_id=pickup.id))
 
-        if current_user.role == "driver":
-            if pickup.accepted_by_driver_id != current_user.id:
-                flash("You can only update pickups assigned to you.", "danger")
-                return redirect(url_for("driver_dashboard"))
+        if current_user.role == "driver" and pickup.accepted_by_driver_id != current_user.id:
+            flash("You can only update pickups assigned to you.", "danger")
+            return redirect(url_for("driver_dashboard"))
 
         new_status = form.status.data
         old_status = pickup.status
@@ -278,7 +269,6 @@ def create_app():
     def admin_dashboard():
         pickups = PickupOrder.query.order_by(PickupOrder.created_at.desc()).all()
         users = User.query.order_by(User.full_name.asc()).all()
-
         return render_template("admin_dashboard.html", pickups=pickups, users=users)
 
     @app.route("/admin/users/new", methods=["GET", "POST"])
@@ -310,6 +300,7 @@ def create_app():
         return render_template("create_user.html", form=form)
 
     @app.route("/seed-admin")
+    @app.route("/seed_admin")
     def seed_admin():
         demo_users = [
             {
@@ -356,21 +347,28 @@ def create_app():
         return "Demo users created/reset successfully."
 
     @app.route("/debug-users")
+    @app.route("/debug_users")
     def debug_users():
         users = User.query.order_by(User.id.asc()).all()
+
         if not users:
             return "No users found in database."
 
         lines = []
         for user in users:
             lines.append(
-                f"ID={user.id} | {user.email} | role={user.role} | name={user.full_name}"
+                f"ID={user.id} | email={user.email} | role={user.role} | name={user.full_name}"
             )
+
         return "<br>".join(lines)
 
     @app.errorhandler(403)
     def forbidden(_error):
         return "<h1>403 Forbidden</h1><p>You do not have access to this page.</p>", 403
+
+    @app.errorhandler(404)
+    def not_found(_error):
+        return "<h1>404 Not Found</h1><p>The page you requested does not exist.</p>", 404
 
     with app.app_context():
         db.create_all()
