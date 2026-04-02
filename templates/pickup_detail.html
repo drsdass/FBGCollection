@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Pickup Detail{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Pickup #{{ pickup.id }}</h1>
+</div>
+
+<div class="card">
+    <h2>Pickup Information</h2>
+    <div class="details-grid">
+        <div><strong>Patient:</strong> {{ pickup.patient_first_name }} {{ pickup.patient_last_name }}</div>
+        <div><strong>DOB:</strong> {{ pickup.dob or "N/A" }}</div>
+        <div><strong>Patient ID / MRN:</strong> {{ pickup.patient_identifier or "N/A" }}</div>
+        <div><strong>Priority:</strong> {{ pickup.priority }}</div>
+        <div><strong>Status:</strong> <span class="badge">{{ pickup.status }}</span></div>
+        <div><strong>Facility:</strong> {{ pickup.facility_name or "N/A" }}</div>
+        <div><strong>Pickup Address:</strong> {{ pickup.pickup_address }}</div>
+        <div><strong>Ordering Nurse:</strong> {{ pickup.ordering_nurse_name }}</div>
+        <div><strong>Nurse Phone:</strong> {{ pickup.ordering_nurse_phone or "N/A" }}</div>
+        <div><strong>Driver:</strong> {{ pickup.accepted_by_driver.full_name if pickup.accepted_by_driver else "Unassigned" }}</div>
+        <div><strong>Created:</strong> {{ pickup.created_at.strftime('%Y-%m-%d %I:%M %p') }}</div>
+        <div><strong>Accepted:</strong> {{ pickup.accepted_at.strftime('%Y-%m-%d %I:%M %p') if pickup.accepted_at else "N/A" }}</div>
+    </div>
+
+    <div class="section">
+        <strong>Tests Ordered</strong>
+        <p>{{ pickup.tests_ordered }}</p>
+    </div>
+
+    <div class="section">
+        <strong>Special Instructions</strong>
+        <p>{{ pickup.special_instructions or "None" }}</p>
+    </div>
+</div>
+
+{% if current_user.role in ['driver', 'admin'] and pickup.accepted_by_driver_id == current_user.id %}
+<div class="card">
+    <h2>Update Status</h2>
+    <form method="POST" action="{{ url_for('update_pickup_status', pickup_id=pickup.id) }}">
+        {{ status_form.hidden_tag() }}
+        <label>{{ status_form.status.label }}</label>
+        {{ status_form.status(class="input") }}
+        {{ status_form.submit(class="btn btn-primary") }}
+    </form>
+</div>
+{% elif current_user.role == 'driver' and pickup.status == 'Requested' %}
+<div class="card">
+    <h2>Accept Pickup</h2>
+    <form method="POST" action="{{ url_for('accept_pickup', pickup_id=pickup.id) }}">
+        <button type="submit" class="btn btn-primary">Accept Pickup</button>
+    </form>
+</div>
+{% endif %}
+
+<div class="card">
+    <h2>Status History</h2>
+    {% if history %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Changed At</th>
+                <th>Old Status</th>
+                <th>New Status</th>
+                <th>Changed By</th>
+                <th>Notes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in history %}
+            <tr>
+                <td>{{ item.changed_at.strftime('%Y-%m-%d %I:%M %p') }}</td>
+                <td>{{ item.old_status or "-" }}</td>
+                <td>{{ item.new_status }}</td>
+                <td>{{ item.changed_by.full_name if item.changed_by else "System" }}</td>
+                <td>{{ item.notes or "" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No status history yet.</p>
+    {% endif %}
+</div>
+{% endblock %}
