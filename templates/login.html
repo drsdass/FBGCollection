@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<div class="card narrow-card">
+    <h1>Login</h1>
+    <form method="POST">
+        {{ form.hidden_tag() }}
+
+        <label>{{ form.email.label }}</label>
+        {{ form.email(class="input") }}
+
+        <label>{{ form.password.label }}</label>
+        {{ form.password(class="input") }}
+
+        {{ form.submit(class="btn btn-primary full-width") }}
+    </form>
+
+    <div class="helper-text">
+        <p><strong>Demo users after visiting /seed-admin:</strong></p>
+        <p>Admin: admin@example.com / admin123</p>
+        <p>Nurse: nurse@example.com / nurse123</p>
+        <p>Driver: driver@example.com / driver123</p>
+    </div>
+</div>
+{% endblock %}
