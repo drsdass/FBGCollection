@@ -88,7 +88,15 @@ def create_app():
             email = form.email.data.lower().strip()
             password = form.password.data
 
+            print(f"LOGIN ATTEMPT: {email}")
+
             user = User.query.filter_by(email=email).first()
+
+            if not user:
+                print("NO USER FOUND")
+            else:
+                print(f"USER FOUND: {user.email} / role={user.role}")
+                print(f"PASSWORD CHECK: {user.check_password(password)}")
 
             if user and user.check_password(password):
                 login_user(user)
@@ -346,6 +354,19 @@ def create_app():
 
         db.session.commit()
         return "Demo users created/reset successfully."
+
+    @app.route("/debug-users")
+    def debug_users():
+        users = User.query.order_by(User.id.asc()).all()
+        if not users:
+            return "No users found in database."
+
+        lines = []
+        for user in users:
+            lines.append(
+                f"ID={user.id} | {user.email} | role={user.role} | name={user.full_name}"
+            )
+        return "<br>".join(lines)
 
     @app.errorhandler(403)
     def forbidden(_error):
